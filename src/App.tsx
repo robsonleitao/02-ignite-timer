@@ -12,6 +12,7 @@ export function App() {
       <BrowserRouter>
         <Router />
       </BrowserRouter>
+      
     </ThemeProvider>
   )
 }
