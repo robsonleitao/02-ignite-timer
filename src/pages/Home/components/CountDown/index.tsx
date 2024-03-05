@@ -1,13 +1,31 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { CountDownContainer, Separator } from "./styles";
 import { differenceInSeconds } from "date-fns";
+import { CyclesContext } from "../../Home";
 
 export function CountDown() {
-    // criando um estado para armazenar os segundos que passaram
-    const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
+    const {activeCycle, 
+        activeCycleId,
+        amountSecondsPassed,
+        markCurrentCycleAsFineshed,
+        setSecondsPassed,
+    } = useContext(CyclesContext)
 
     // convertendo minutos em segundos
     const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
+
+    // verificando quantos segundos já passaram
+    const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
+
+    // convertendo os segundos restantes em minutos novamente
+    const minutesAmount = Math.floor(currentSeconds / 60)
+
+    // convertendo os minutos que não resultam valores inteiros para segundos novamente
+    const secondsAmount = currentSeconds % 60
+
+    // personalizando os minutos e segundos
+    const minutes = String(minutesAmount).padStart(2, '0')
+    const seconds = String(secondsAmount).padStart(2, '0')
 
     useEffect(() => {
         let interval: number;
@@ -17,18 +35,11 @@ export function CountDown() {
                 const secondsDifference = differenceInSeconds(new Date(), activeCycle.startDate)
 
                 if(secondsDifference >= totalSeconds) {
-                    setCycles(state => state.map(cycle => {
-                        if(cycle.id == activeCycleId) {
-                            return {...cycle, fineshedDate: new Date()}
-                        }else {
-                            return cycle
-                        }
-                    }))
-
-                    setAmountSecondsPassed(totalSeconds)
+                    markCurrentCycleAsFineshed()
+                    setSecondsPassed(totalSeconds)
                     clearInterval(interval)
                 }else {
-                    setAmountSecondsPassed(secondsDifference)
+                    setSecondsPassed(secondsDifference)
                 }
             }, 1000)
 
@@ -38,7 +49,13 @@ export function CountDown() {
             clearInterval(interval)
         }
 
-    }, [activeCycle, totalSeconds, activeCycleId])
+    }, [activeCycle, totalSeconds, activeCycleId, markCurrentCycleAsFineshed])
+
+    useEffect(() => {
+        if(activeCycle) {
+            document.title = `${minutes}:${seconds}`
+        }
+    }, [minutes, seconds, activeCycle])
 
     return (
         <CountDownContainer>
